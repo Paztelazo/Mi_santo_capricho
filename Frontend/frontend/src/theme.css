@@ -1,0 +1,17 @@
+:root {
+  --rosa-brand: #d47a93;
+  --rosa-claro: #ffeef4;
+  --rosa-borde: rgba(212, 122, 147, 0.2);
+  --texto-oscuro: #5b3e44;
+  --bg-crema: #fffafa;
+  --card-shadow: 0 12px 24px rgba(0, 0, 0, 0.04);
+  --radius-card: 1rem;
+  --radius-soft: 0.5rem;
+  --linea-dorada: #d1b26a;
+}
+
+body {
+  background-color: var(--bg-crema);
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--texto-oscuro);
+}
