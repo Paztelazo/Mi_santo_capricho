@@ -3,18 +3,10 @@ import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import pkg from "pg";
+import authRouter from "./routes/auth.js";
+import pool from "./db/index.js";
 
 dotenv.config();
-
-const { Pool } = pkg;
-
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT
-});
 
 const app = express();
 
@@ -31,6 +23,9 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("FUNCIONO 🍰");
 });
+
+// auth (login)
+app.use("/api/auth", authRouter);
 
 // listar productos
 app.get("/api/productos", async (req, res) => {

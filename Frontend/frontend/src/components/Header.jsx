@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.jpg";
 
 export default function Header() {
+  const { user } = useAuth();
   return (
     <header
       className="mb-4 py-4"
@@ -62,11 +64,36 @@ export default function Header() {
           <Link className="text-decoration-none" to="/pedido" style={{ color: "#6b5057" }}>
             Tu pedido
           </Link>
-          <Link className="text-decoration-none" to="/admin" style={{ color: "#6b5057" }}>
-            Interno
-          </Link>
+          {user && (
+            <Link className="text-decoration-none" to="/admin" style={{ color: "#6b5057" }}>
+              Interno
+            </Link>
+          )}
+          {/* login/logout */}
+          <AuthLinks />
         </nav>
       </div>
     </header>
+  );
+}
+
+function AuthLinks() {
+  const { user, logout } = useAuth();
+
+  if (user) {
+    return (
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <span style={{ color: "#6b5057" }}>{user.email}</span>
+        <button className="btn btn-sm btn-outline-secondary" onClick={logout}>
+          Salir
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <Link className="text-decoration-none" to="/login" style={{ color: "#6b5057" }}>
+      Iniciar sesión
+    </Link>
   );
 }
