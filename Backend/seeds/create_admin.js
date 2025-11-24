@@ -1,6 +1,6 @@
+// seeds/create_admin.js
 import dotenv from "dotenv";
 import pkg from "pg";
-import bcrypt from "bcrypt";
 import { fileURLToPath } from "url";
 
 dotenv.config();
@@ -22,23 +22,21 @@ async function ensureUsersTable() {
       nombre_completo VARCHAR(200),
       email TEXT UNIQUE NOT NULL,
       rol VARCHAR(50) DEFAULT 'cliente',
-      password_hash TEXT NOT NULL,
+      password TEXT NOT NULL,
       creado TIMESTAMP DEFAULT now()
     );
   `);
 }
 
 async function createOrUpdateAdmin(email, plainPassword) {
-  const saltRounds = 10;
-  const hash = await bcrypt.hash(plainPassword, saltRounds);
-
-  // Upsert admin user
+  // 🔴 VULNERABLE A PROPÓSITO: guarda password en texto plano
   const result = await pool.query(
-    `INSERT INTO usuarios (nombre_completo, email, password_hash, rol)
+    `INSERT INTO usuarios (nombre_completo, email, password, rol)
      VALUES ($1, $2, $3, 'admin')
-     ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, rol = 'admin'
+     ON CONFLICT (email)
+     DO UPDATE SET password = EXCLUDED.password, rol = 'admin'
      RETURNING id, email, rol, creado`,
-    [email.split('@')[0], email, hash]
+    [email.split("@")[0], email, plainPassword]
   );
 
   return result.rows[0];
@@ -49,16 +47,22 @@ async function main() {
   const password = process.env.ADMIN_PASSWORD;
 
   if (!email || !password) {
-    console.error('ERROR: set ADMIN_EMAIL and ADMIN_PASSWORD in your .env before running this script.');
+    console.error(
+      "ERROR: set ADMIN_EMAIL and ADMIN_PASSWORD in your .env before running this script."
+    );
     process.exit(1);
   }
 
   try {
     await ensureUsersTable();
     const user = await createOrUpdateAdmin(email, password);
-    console.log('Admin creado/actualizado:', { id: user.id, email: user.email, role: user.role });
+    console.log("Admin creado/actualizado:", {
+      id: user.id,
+      email: user.email,
+      role: user.rol,
+    });
   } catch (err) {
-    console.error('Fallo creando admin:', err);
+    console.error("Fallo creando admin:", err);
   } finally {
     await pool.end();
   }

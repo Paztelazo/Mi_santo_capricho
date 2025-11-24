@@ -8,8 +8,9 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
   "seed": "node seeds/seed.js",
-  "create-admin": "node seeds/create_admin.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "seed:admin": "node seeds/create_admin.js",
+  "seed:client": "node seeds/create_client.js",
+  "seed:all": "npm run seed:admin && npm run seed:client"
   },
   "keywords": [],
   "author": "",

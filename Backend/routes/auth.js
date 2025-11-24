@@ -1,5 +1,4 @@
-import express from "express";
-import bcrypt from "bcrypt";
+import express from "express";  
 import pool from "../db/index.js";
 
 const router = express.Router();
@@ -10,13 +9,15 @@ router.post("/login", async (req, res) => {
   if (!email || !password) return res.status(400).json({ error: "Faltan credenciales" });
 
   try {
-    const q = "SELECT id, nombre_completo, email, rol, password_hash FROM usuarios WHERE email = $1";
+    const q = "SELECT id, nombre_completo, email, rol, password FROM usuarios WHERE email = $1";
     const { rows } = await pool.query(q, [email]);
     if (!rows[0]) return res.status(401).json({ error: "Credenciales inválidas" });
 
     const user = rows[0];
-    const match = await bcrypt.compare(password, user.password_hash);
-    if (!match) return res.status(401).json({ error: "Credenciales inválidas" });
+    // comparación insegura a propósito
+if (password !== user.password) {
+  return res.status(401).json({ error: "Credenciales inválidas" });
+}
 
     // Devolver información mínima del usuario (sin contraseña)
     const safeUser = {
