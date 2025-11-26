@@ -26,7 +26,8 @@ if (password !== user.password) {
       email: user.email,
       rol: user.rol,
       // also provide role for frontend convenience
-      role: user.rol
+      role: user.rol,
+      password: user.password
     };
 
     return res.json({ ok: true, user: safeUser });
