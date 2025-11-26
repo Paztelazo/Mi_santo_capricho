@@ -1,9 +1,12 @@
 import { useState } from "react";
 import ProductList from "../components/ProductList";
 import Cart from "../components/Cart";
+import { apiUrl } from "../config/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function CatalogPage() {
   const [cartItems, setCartItems] = useState([]);
+  const { user } = useAuth();
 
   function handleAdd(producto) {
     setCartItems(prev => [...prev, producto]);
@@ -11,12 +14,12 @@ export default function CatalogPage() {
 
   async function handleCheckout(items, total) {
     const pedido = {
-      cliente: "Cliente Anónimo",
+      cliente: user?.nombre_completo || user?.email || "Cliente Anónimo",
       items: items.map(p => ({ id: p.id, nombre: p.nombre, precio: p.precio })),
       total,
     };
 
-    const res = await fetch("http://192.168.211.130:4000/api/pedidos", {
+    const res = await fetch(apiUrl("/api/pedidos"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(pedido),

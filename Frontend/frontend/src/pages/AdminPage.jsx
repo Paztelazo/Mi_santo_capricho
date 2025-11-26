@@ -1,13 +1,29 @@
 import { useEffect, useState } from "react";
+import { apiUrl } from "../config/api";
 
 export default function AdminPage() {
-  const [empleados, setEmpleados] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("http://192.168.211.130:4000/api/dev/empleados")
-      .then(res => res.json())
-      .then(data => setEmpleados(data))
-      .catch(err => console.error("Error cargando empleados:", err));
+    async function fetchPedidos() {
+      try {
+        const res = await fetch(apiUrl("/api/pedidos"));
+        if (!res.ok) {
+          throw new Error("No se pudieron obtener los pedidos");
+        }
+
+        const data = await res.json();
+        setPedidos(data || []);
+      } catch (err) {
+        setError(err.message || "Error desconocido");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchPedidos();
   }, []);
 
   return (
@@ -19,57 +35,80 @@ export default function AdminPage() {
           color: "#b34343",
         }}
       >
-        Área interna (Datos sensibles expuestos)
+        Pedidos de clientes
       </h2>
       <p
         className="text-center text-muted"
-        style={{ fontSize: "0.9rem", maxWidth: "600px", margin: "0 auto" }}
+        style={{ fontSize: "0.9rem", maxWidth: "640px", margin: "0 auto" }}
       >
-        Esta página no está protegida. Cualquier persona puede ver números de
-        teléfono, correos internos y salario. Eso es una brecha de
-        confidencialidad. Esta será la vulnerabilidad que luego cerraremos con
-        autenticación.
+        Revisa todos los pedidos que entran al sistema con detalle de productos y montos.
       </p>
 
-      <div className="table-responsive mt-4">
-        <table className="table table-sm table-bordered align-middle"
-          style={{
-            backgroundColor: "#fff",
-            borderRadius: "1rem",
-            overflow: "hidden",
-            boxShadow: "0 12px 24px rgba(0,0,0,0.04)",
-            border: "1px solid rgba(212, 122, 147, 0.2)"
-          }}
-        >
+      <div
+        className="table-responsive mt-4"
+        style={{
+          backgroundColor: "#fff",
+          borderRadius: "1rem",
+          boxShadow: "0 12px 24px rgba(0,0,0,0.04)",
+          border: "1px solid rgba(212, 122, 147, 0.2)",
+          padding: "0.5rem",
+        }}
+      >
+        <table className="table table-sm align-middle mb-0">
           <thead className="table-light">
             <tr>
-              <th>Nombre</th>
-              <th>Cargo</th>
-              <th>Teléfono</th>
-              <th>Email</th>
-              <th>Salario (S/)</th>
-              <th>Activo</th>
+              <th style={{ minWidth: "70px" }}>ID</th>
+              <th style={{ minWidth: "160px" }}>Cliente</th>
+              <th style={{ minWidth: "100px" }}>Total (S/)</th>
+              <th>Productos</th>
             </tr>
           </thead>
           <tbody>
-            {empleados.map(emp => (
-              <tr key={emp.id}>
-                <td>{emp.nombres} {emp.apellidos}</td>
-                <td>{emp.cargo}</td>
-                <td>{emp.telefono}</td>
-                <td>{emp.email_corporativo}</td>
-                <td>{emp.salario_mensual}</td>
-                <td>{emp.activo ? "Sí" : "No"}</td>
+            {loading && (
+              <tr>
+                <td colSpan={4} className="text-center text-muted">
+                  Cargando pedidos...
+                </td>
+              </tr>
+            )}
+
+            {error && !loading && (
+              <tr>
+                <td colSpan={4} className="text-center text-danger">
+                  {error}
+                </td>
+              </tr>
+            )}
+
+            {!loading && !error && pedidos.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-center text-muted">
+                  No hay pedidos registrados todavía.
+                </td>
+              </tr>
+            )}
+
+            {!loading && !error && pedidos.map(pedido => (
+              <tr key={pedido.id}>
+                <td className="fw-semibold">#{pedido.id}</td>
+                <td>{pedido.cliente}</td>
+                <td className="fw-semibold" style={{ color: "var(--rosa-brand)" }}>
+                  {Number(pedido.total || 0).toFixed(2)}
+                </td>
+                <td>
+                  <ul className="mb-0 ps-3" style={{ fontSize: "0.9rem" }}>
+                    {(pedido.items || []).map((item, index) => (
+                      <li key={`${pedido.id}-${index}`}>
+                        {item.nombre} <span className="text-muted">(S/ {item.precio})</span>
+                      </li>
+                    ))}
+                  </ul>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      <p className="text-center text-muted mt-3" style={{ fontSize: "0.8rem" }}>
-        *Esto es exactamente el tipo de fuga que ISO 27001 y OWASP piden evitar.
-        Luego vamos a exigir token de administrador.
-      </p>
     </div>
   );
 }
