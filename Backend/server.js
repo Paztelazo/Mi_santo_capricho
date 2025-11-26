@@ -71,6 +71,31 @@ app.post("/api/pedidos", async (req, res) => {
   }
 });
 
+// listar pedidos (vista de administración)
+app.get("/api/pedidos", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT id, cliente, items, total FROM pedidos ORDER BY id DESC"
+    );
+
+    const pedidos = rows.map(pedido => {
+      let items = pedido.items;
+      try {
+        items = typeof items === "string" ? JSON.parse(items) : items;
+      } catch (err) {
+        console.warn("No se pudo parsear items de pedido", pedido.id, err);
+      }
+
+      return { ...pedido, items };
+    });
+
+    res.json(pedidos);
+  } catch (err) {
+    console.error("Error en GET /api/pedidos:", err);
+    res.status(500).json({ error: "No se pudo obtener los pedidos" });
+  }
+});
+
 // 🔍 endpoint de diagnóstico para que veamos si la DB conecta
 app.get("/api/debug/dbcheck", async (req, res) => {
   try {

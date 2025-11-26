@@ -15,6 +15,7 @@ npm run dev  # puerto 4000
 - `GET /api/productos` lista completa desde la tabla `productos`.
 - `GET /api/dev/empleados` datos semilla en memoria para que el frontend no falle y puedas probar controles de autorización.
 - `POST /api/pedidos` crea pedido en tabla `pedidos` (almacena JSON de items).
+- `GET /api/pedidos` lista todos los pedidos para la vista de administración.
 - `GET /api/debug/dbcheck` prueba de conectividad a la base.
 
 ## Notas para pruebas WSTG
