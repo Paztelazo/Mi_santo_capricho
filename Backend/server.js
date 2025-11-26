@@ -38,6 +38,17 @@ app.get("/api/productos", async (req, res) => {
   }
 });
 
+// datos de prueba para visibilidad en el frontend y pruebas WSTG
+app.get("/api/dev/empleados", (req, res) => {
+  const empleados = [
+    { id: 1, nombre: "Ana Gómez", rol: "admin", email: "ana@example.com" },
+    { id: 2, nombre: "Luis Pérez", rol: "user", email: "luis@example.com" },
+    { id: 3, nombre: "Carla Ruiz", rol: "user", email: "carla@example.com" },
+  ];
+
+  res.json({ empleados, total: empleados.length });
+});
+
 // crear pedido
 app.post("/api/pedidos", async (req, res) => {
   const { cliente, items, total } = req.body;
