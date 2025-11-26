@@ -16,7 +16,7 @@ export default function CatalogPage() {
       total,
     };
 
-    const res = await fetch("http://localhost:4000/api/pedidos", {
+    const res = await fetch("http://192.168.211.130:4000/api/pedidos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(pedido),

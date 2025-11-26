@@ -14,7 +14,14 @@ const app = express();
 app.use(helmet());
 
 // permitir que el frontend pueda leer la API
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://192.168.211.130:5173"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 // parsear JSON en body
 app.use(express.json());

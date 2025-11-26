@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   async function login(email, password) {
-    const res = await fetch("http://localhost:4000/api/auth/login", {
+const res = await fetch("http://192.168.211.130:4000/api/auth/login", { 
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })
