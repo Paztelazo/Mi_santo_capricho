@@ -1,17 +1,20 @@
 import { useState } from "react";
 import Cart from "../components/Cart";
+import { apiUrl } from "../config/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function PedidoPage() {
   const [cartItems, setCartItems] = useState([]);
+  const { user } = useAuth();
 
   async function handleCheckout(items, total) {
     const pedido = {
-      cliente: "Cliente Anónimo",
+      cliente: user?.nombre_completo || user?.email || "Cliente Anónimo",
       items: items.map(p => ({ id: p.id, nombre: p.nombre, precio: p.precio })),
       total,
     };
 
-    const res = await fetch("http://192.168.211.130:4000/api/pedidos", {
+    const res = await fetch(apiUrl("/api/pedidos"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(pedido),

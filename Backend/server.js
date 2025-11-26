@@ -2,13 +2,28 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
-import pkg from "pg";
 import authRouter from "./routes/auth.js";
 import pool from "./db/index.js";
 
 dotenv.config();
 
 const app = express();
+
+async function ensurePedidosTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pedidos (
+        id SERIAL PRIMARY KEY,
+        cliente TEXT NOT NULL DEFAULT 'Cliente Anónimo',
+        items JSONB NOT NULL DEFAULT '[]',
+        total NUMERIC(10,2) NOT NULL DEFAULT 0,
+        creado TIMESTAMP DEFAULT now()
+      );
+    `);
+  } catch (err) {
+    console.error("No se pudo asegurar la tabla pedidos:", err);
+  }
+}
 
 // seguridad básica
 app.use(helmet());
@@ -34,6 +49,9 @@ app.get("/", (req, res) => {
 // auth (login)
 app.use("/api/auth", authRouter);
 
+// asegurar tabla de pedidos al iniciar
+ensurePedidosTable();
+
 // listar productos
 app.get("/api/productos", async (req, res) => {
   try {
@@ -58,11 +76,19 @@ app.get("/api/dev/empleados", (req, res) => {
 
 // crear pedido
 app.post("/api/pedidos", async (req, res) => {
-  const { cliente, items, total } = req.body;
+  const { cliente, items, total } = req.body || {};
+
+  if (!Array.isArray(items)) {
+    return res.status(400).json({ error: "Formato de items inválido" });
+  }
+
   try {
+    const clienteFinal = (cliente || "Cliente Anónimo").toString();
+    const totalNumerico = Number(total) || 0;
+
     const result = await pool.query(
       "INSERT INTO pedidos (cliente, items, total) VALUES ($1, $2, $3) RETURNING id",
-      [cliente, JSON.stringify(items), total]
+      [clienteFinal, JSON.stringify(items), totalNumerico]
     );
     res.status(201).json({ pedidoId: result.rows[0].id });
   } catch (err) {
@@ -86,7 +112,7 @@ app.get("/api/pedidos", async (req, res) => {
         console.warn("No se pudo parsear items de pedido", pedido.id, err);
       }
 
-      return { ...pedido, items };
+      return { ...pedido, items: Array.isArray(items) ? items : [] };
     });
 
     res.json(pedidos);

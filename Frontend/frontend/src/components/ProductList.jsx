@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
+import { apiUrl } from "../config/api";
 
 export default function ProductList({ onAdd }) {
   const [productos, setProductos] = useState([]);
 
   useEffect(() => {
-      fetch("http://192.168.211.130:4000/api/productos")
+      fetch(apiUrl("/api/productos"))
       .then(res => res.json())
       .then(data => setProductos(data))
       .catch(err => console.error("Error cargando productos:", err));

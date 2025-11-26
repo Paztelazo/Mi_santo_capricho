@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
+import { apiUrl } from "../config/api";
 
 const AuthContext = createContext(null);
 
@@ -19,7 +20,7 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   async function login(email, password) {
-const res = await fetch("http://192.168.211.130:4000/api/auth/login", { 
+    const res = await fetch(apiUrl("/api/auth/login"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })

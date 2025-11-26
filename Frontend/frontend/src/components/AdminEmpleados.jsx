@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { apiUrl } from "../config/api";
 
 export default function AdminEmpleados() {
   const [empleados, setEmpleados] = useState([]);
 
   useEffect(() => {
-fetch("http://192.168.211.130:4000/api/dev/empleados")
+    fetch(apiUrl("/api/dev/empleados"))
       .then(res => res.json())
       .then(data => setEmpleados(data))
       .catch(err => console.error("Error cargando empleados:", err));

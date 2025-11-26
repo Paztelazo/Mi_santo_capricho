@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiUrl } from "../config/api";
 
 export default function AdminPage() {
   const [pedidos, setPedidos] = useState([]);
@@ -8,7 +9,7 @@ export default function AdminPage() {
   useEffect(() => {
     async function fetchPedidos() {
       try {
-        const res = await fetch("http://192.168.211.130:4000/api/pedidos");
+        const res = await fetch(apiUrl("/api/pedidos"));
         if (!res.ok) {
           throw new Error("No se pudieron obtener los pedidos");
         }
