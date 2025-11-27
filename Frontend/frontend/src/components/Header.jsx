@@ -4,6 +4,7 @@ import logo from "../assets/logo.jpg";
 
 export default function Header() {
   const { user } = useAuth();
+
   return (
     <header
       className="mb-4 py-4"
@@ -64,11 +65,14 @@ export default function Header() {
           <Link className="text-decoration-none" to="/pedido" style={{ color: "#6b5057" }}>
             Tu pedido
           </Link>
-          {user && (
+
+          {/* 🔐 Solo admins ven "Interno" */}
+          {user?.rol === "admin" && (
             <Link className="text-decoration-none" to="/admin" style={{ color: "#6b5057" }}>
               Interno
             </Link>
           )}
+
           {/* login/logout */}
           <AuthLinks />
         </nav>

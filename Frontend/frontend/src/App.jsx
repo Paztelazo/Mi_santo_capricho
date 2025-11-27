@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
-import { AuthProvider, RequireAuth } from "./context/AuthContext";
+import { AuthProvider, RequireAuth, RequireRole } from "./context/AuthContext";
 
 import HomePage from "./pages/HomePage.jsx";
 import CatalogPage from "./pages/CatalogPage.jsx";
@@ -16,9 +16,26 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/catalogo" element={<CatalogPage />} />
-        <Route path="/pedido" element={<PedidoPage />} />
+
+        <Route
+          path="/pedido"
+          element={
+            <RequireAuth>
+              <PedidoPage />
+            </RequireAuth>
+          }
+        />
+
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/admin" element={<RequireAuth><AdminPage /></RequireAuth>} />
+
+        <Route
+          path="/admin"
+          element={
+            <RequireRole role="admin">
+              <AdminPage />
+            </RequireRole>
+          }
+        />
       </Routes>
 
       <footer

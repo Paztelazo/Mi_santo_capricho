@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ProductList from "../components/ProductList";
 import Cart from "../components/Cart";
 import { apiUrl } from "../config/api";
@@ -7,23 +8,40 @@ import { useAuth } from "../context/AuthContext";
 export default function CatalogPage() {
   const [cartItems, setCartItems] = useState([]);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   function handleAdd(producto) {
-    setCartItems(prev => [...prev, producto]);
+    setCartItems((prev) => [...prev, producto]);
   }
 
   async function handleCheckout(items, total) {
+    if (!user) {
+      alert("Debes iniciar sesión para confirmar tu pedido.");
+      navigate("/login");
+      return;
+    }
+
     const pedido = {
-      cliente: user?.nombre_completo || user?.email || "Cliente Anónimo",
-      items: items.map(p => ({ id: p.id, nombre: p.nombre, precio: p.precio })),
+      cliente: user.nombre_completo || user.email || "Cliente Anónimo",
+      items: items.map((p) => ({ id: p.id, nombre: p.nombre, precio: p.precio })),
       total,
     };
 
     const res = await fetch(apiUrl("/api/pedidos"), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        // 👇 aquí va el token
+        ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {}),
+      },
       body: JSON.stringify(pedido),
     });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error || "Ocurrió un error al enviar el pedido");
+      return;
+    }
 
     const data = await res.json();
     alert("Pedido enviado. ID: " + data.pedidoId);

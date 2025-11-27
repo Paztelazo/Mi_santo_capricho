@@ -8,17 +8,37 @@ export default function PedidoPage() {
   const { user } = useAuth();
 
   async function handleCheckout(items, total) {
+    // 🛑 Seguridad en frontend: si por algún motivo no hay usuario, no dejamos continuar
+    if (!user) {
+      alert("Debes iniciar sesión para confirmar tu pedido.");
+      return;
+    }
+
+    // Ligamos el pedido al usuario autenticado
     const pedido = {
-      cliente: user?.nombre_completo || user?.email || "Cliente Anónimo",
-      items: items.map(p => ({ id: p.id, nombre: p.nombre, precio: p.precio })),
+      // puedes cambiar los nombres de campos según lo que espere tu backend
+      cliente: user.nombre_completo || user.email || "Cliente sin nombre",
+      items: items.map(p => ({
+        id: p.id,
+        nombre: p.nombre,
+        precio: p.precio,
+      })),
       total,
     };
 
     const res = await fetch(apiUrl("/api/pedidos"), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", 
+            ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {}),
+       },
       body: JSON.stringify(pedido),
     });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error || "Ocurrió un error al enviar el pedido");
+      return;
+    }
 
     const data = await res.json();
     alert("Pedido enviado. ID: " + data.pedidoId);

@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
     const res = await fetch(apiUrl("/api/auth/login"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
     });
 
     if (!res.ok) {
@@ -32,8 +32,11 @@ export function AuthProvider({ children }) {
     }
 
     const data = await res.json();
-    setUser(data.user || null);
-    return data.user;
+    const userWithToken = data.user
+      ? { ...data.user, token: data.token }
+        : null;
+      setUser(userWithToken);
+      return userWithToken;
   }
 
   function logout() {
@@ -54,5 +57,20 @@ export function useAuth() {
 export function RequireAuth({ children }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
+
+// 🔐 Nuevo guard por rol
+export function RequireRole({ children, role }) {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (role && user.rol !== role) {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 }

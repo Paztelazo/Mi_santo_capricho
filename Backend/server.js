@@ -2,12 +2,20 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
+import rateLimit from "express-rate-limit";
 import authRouter from "./routes/auth.js";
 import pool from "./db/index.js";
+import jwt from "jsonwebtoken";
 
 dotenv.config();
 
 const app = express();
+
+// 🔍 LOG GLOBAL para ver si las requests llegan a este servidor
+app.use((req, res, next) => {
+  console.log("REQ:", req.method, req.url);
+  next();
+});
 
 async function ensurePedidosTable() {
   try {
@@ -29,14 +37,16 @@ async function ensurePedidosTable() {
 app.use(helmet());
 
 // permitir que el frontend pueda leer la API
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://192.168.211.130:5173"
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://192.168.211.130:5173"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  })
+);
 
 // parsear JSON en body
 app.use(express.json());
@@ -46,7 +56,49 @@ app.get("/", (req, res) => {
   res.send("FUNCIONO 🍰");
 });
 
+// 🔐 limitador de fuerza bruta en login
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // máximo 5 intentos
+  message: {
+    error: "Demasiados intentos de inicio de sesión. Intenta nuevamente en 15 minutos."
+  }
+});
+
+// 🔐 middleware: requiere token válido
+function requireAuth(req, res, next) {
+  const authHeader = req.headers["authorization"] || "";
+  const token = authHeader.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : null;
+
+  if (!token) {
+    return res.status(401).json({ error: "No autenticado" });
+  }
+
+  try {
+    const payload = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "super_inseguro_para_labs"
+    );
+    req.user = payload; // { id, email, rol }
+    next();
+  } catch (err) {
+    console.error("JWT inválido:", err.message);
+    return res.status(401).json({ error: "Token inválido o expirado" });
+  }
+}
+
+// 🔐 middleware: solo admin
+function requireAdmin(req, res, next) {
+  if (!req.user || req.user.rol !== "admin") {
+    return res.status(403).json({ error: "Acceso denegado: solo administradores" });
+  }
+  next();
+}
+
 // auth (login)
+app.use("/api/auth/login", loginLimiter);
 app.use("/api/auth", authRouter);
 
 // asegurar tabla de pedidos al iniciar
@@ -74,8 +126,8 @@ app.get("/api/dev/empleados", (req, res) => {
   res.json({ empleados, total: empleados.length });
 });
 
-// crear pedido
-app.post("/api/pedidos", async (req, res) => {
+// crear pedido (🔐 solo usuario autenticado con token)
+app.post("/api/pedidos", requireAuth, async (req, res) => {
   const { cliente, items, total } = req.body || {};
 
   if (!Array.isArray(items)) {
@@ -90,6 +142,7 @@ app.post("/api/pedidos", async (req, res) => {
       "INSERT INTO pedidos (cliente, items, total) VALUES ($1, $2, $3) RETURNING id",
       [clienteFinal, JSON.stringify(items), totalNumerico]
     );
+
     res.status(201).json({ pedidoId: result.rows[0].id });
   } catch (err) {
     console.error("Error en /api/pedidos:", err);
@@ -97,8 +150,12 @@ app.post("/api/pedidos", async (req, res) => {
   }
 });
 
-// listar pedidos (vista de administración)
-app.get("/api/pedidos", async (req, res) => {
+// listar pedidos (🔐 solo admin)
+console.log(">> Registrando ruta GET /api/pedidos");
+
+app.get("/api/pedidos", requireAuth, requireAdmin, async (req, res) => {
+  console.log(">>> LLEGÓ A GET /api/pedidos");
+
   try {
     const { rows } = await pool.query(
       "SELECT id, cliente, items, total FROM pedidos ORDER BY id DESC"
@@ -137,6 +194,7 @@ app.get("/api/debug/dbcheck", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
+
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`MiSantoCapricho backend escuchando en puerto ${PORT}`);
 });

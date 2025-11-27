@@ -1,5 +1,6 @@
 import express from "express";  
 import pool from "../db/index.js";
+import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
@@ -27,12 +28,22 @@ if (password !== user.password) {
       rol: user.rol,
       // also provide role for frontend convenience
       role: user.rol,
-      password: user.password
     };
 
-    return res.json({ ok: true, user: safeUser });
+     // 🔐 generar token
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        rol: user.rol,
+      },
+      process.env.JWT_SECRET || "super_inseguro_para_labs", // para el curso
+      { expiresIn: "1h" }
+    );
+
+    return res.json({ ok: true, user: safeUser, token });
   } catch (err) {
-    console.error("Error en /api/auth/login:", err);
+    console.error("Error en /login:", err);
     return res.status(500).json({ error: "Error interno" });
   }
 });
