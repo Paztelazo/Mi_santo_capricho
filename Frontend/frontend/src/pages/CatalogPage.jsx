@@ -7,7 +7,7 @@ import { useAuth } from "../context/AuthContext";
 
 export default function CatalogPage() {
   const [cartItems, setCartItems] = useState([]);
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
 
   function handleAdd(producto) {
@@ -17,6 +17,12 @@ export default function CatalogPage() {
   async function handleCheckout(items, total) {
     if (!user) {
       alert("Debes iniciar sesión para confirmar tu pedido.");
+      navigate("/login");
+      return;
+    }
+    const authToken = token || user?.token;
+    if (!authToken) {
+      alert("No se encontró token de autenticación. Vuelve a iniciar sesión.");
       navigate("/login");
       return;
     }
@@ -32,7 +38,7 @@ export default function CatalogPage() {
       headers: {
         "Content-Type": "application/json",
         // 👇 aquí va el token
-        ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {}),
+        Authorization: `Bearer ${authToken}`,
       },
       body: JSON.stringify(pedido),
     });
